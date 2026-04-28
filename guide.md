@@ -47,6 +47,12 @@
 | `frontend/js/search.js` | 帖子搜索 |
 | `frontend/js/profile.js` | 个人中心 |
 
+接口任务：
+
+- 根据页面需要，先在 `frontend/js/api.js` 写好请求函数。
+- 后端接口没完成时，可以先用假数据渲染页面。
+- 页面需要新增字段时，先更新本指南的 API 表，再通知后端。
+
 验收标准：
 
 - 页面能正常跳转。
@@ -87,6 +93,7 @@
 - 未登录不能发帖、评论、点赞、删除。
 - 删除帖子前检查 `posts.user_id == 当前用户 id`。
 - 删除评论前检查 `comments.user_id == 当前用户 id`。
+- 接口输出字段必须和本指南 API 表一致。
 
 统一返回：
 
@@ -118,7 +125,27 @@
 - 点赞表有唯一约束。
 - 项目能按 README 在队友电脑上跑起来。
 
-## 4. 项目目录
+## 4. 接口协作方式
+
+这个项目采用“页面驱动接口”的方式：
+
+- 前端先按页面列出需要的接口和字段。
+- 后端可以先写功能，也可以先写固定 JSON 占位输出。
+- 接口没完成时，前端可以用假数据继续写页面。
+- 接口字段一旦变化，必须同步修改本指南的 API 表。
+- 联调时以后端真实接口为准，不保留前端假数据。
+
+最小接口约定：
+
+```json
+{
+  "success": true,
+  "message": "ok",
+  "data": {}
+}
+```
+
+## 5. 项目目录
 
 ```text
 TalkinCampus/
@@ -155,7 +182,7 @@ TalkinCampus/
     └── seed.sql
 ```
 
-## 5. 数据库
+## 6. 数据库
 
 必须建 5 张表：`users`、`posts`、`comments`、`post_likes`、`comment_likes`。
 
@@ -210,24 +237,26 @@ CREATE TABLE comment_likes (
 );
 ```
 
-## 6. API
+## 7. API
 
-| 方法 | 路径 | 功能 | 是否登录 |
-| --- | --- | --- | --- |
-| POST | `/backend/api/auth/register.php` | 注册 | 否 |
-| POST | `/backend/api/auth/login.php` | 登录 | 否 |
-| POST | `/backend/api/auth/logout.php` | 退出 | 是 |
-| GET | `/backend/api/auth/me.php` | 当前用户 | 是 |
-| GET | `/backend/api/posts/list.php` | 帖子列表 | 否 |
-| GET | `/backend/api/posts/detail.php?id=1` | 帖子详情 | 否 |
-| POST | `/backend/api/posts/create.php` | 发帖 | 是 |
-| POST | `/backend/api/posts/delete.php` | 删除自己的帖子 | 是 |
-| POST | `/backend/api/posts/toggle_like.php` | 帖子点赞/取消 | 是 |
-| POST | `/backend/api/comments/create.php` | 发评论 | 是 |
-| POST | `/backend/api/comments/delete.php` | 删除自己的评论 | 是 |
-| POST | `/backend/api/comments/toggle_like.php` | 评论点赞/取消 | 是 |
-| GET | `/backend/api/search/search.php?q=关键词` | 搜索帖子 | 否 |
-| GET | `/backend/api/users/me.php` | 个人中心 | 是 |
+前端按“页面”调用接口，后端按“路径”实现接口。
+
+| 页面 | 方法 | 路径 | 功能 | 是否登录 |
+| --- | --- | --- | --- | --- |
+| 注册页 | POST | `/backend/api/auth/register.php` | 注册 | 否 |
+| 登录页 | POST | `/backend/api/auth/login.php` | 登录 | 否 |
+| 全站 | POST | `/backend/api/auth/logout.php` | 退出 | 是 |
+| 全站 | GET | `/backend/api/auth/me.php` | 当前用户 | 是 |
+| 首页 | GET | `/backend/api/posts/list.php` | 帖子列表 | 否 |
+| 帖子详情 | GET | `/backend/api/posts/detail.php?id=1` | 帖子详情 | 否 |
+| 首页 | POST | `/backend/api/posts/create.php` | 发帖 | 是 |
+| 帖子详情 | POST | `/backend/api/posts/delete.php` | 删除自己的帖子 | 是 |
+| 首页/详情 | POST | `/backend/api/posts/toggle_like.php` | 帖子点赞/取消 | 是 |
+| 帖子详情 | POST | `/backend/api/comments/create.php` | 发评论 | 是 |
+| 帖子详情 | POST | `/backend/api/comments/delete.php` | 删除自己的评论 | 是 |
+| 帖子详情 | POST | `/backend/api/comments/toggle_like.php` | 评论点赞/取消 | 是 |
+| 首页 | GET | `/backend/api/search/search.php?q=关键词` | 搜索帖子 | 否 |
+| 个人中心 | GET | `/backend/api/users/me.php` | 个人中心 | 是 |
 
 禁止做：
 
@@ -236,7 +265,7 @@ CREATE TABLE comment_likes (
 /backend/api/users/search.php
 ```
 
-## 7. 页面要求
+## 8. 页面要求
 
 | 页面 | 必须显示 | 不能显示 |
 | --- | --- | --- |
@@ -246,39 +275,46 @@ CREATE TABLE comment_likes (
 | 注册页 | 用户名、昵称、密码、注册按钮 | 无 |
 | 个人中心 | 自己的资料、自己的帖子、自己的评论 | 别人的资料、别人的历史内容 |
 
-## 8. 开发顺序
+## 9. 开发顺序
 
 | 顺序 | 负责人 | 任务 |
 | --- | --- | --- |
 | 1 | C | 建目录、写 `schema.sql`、写 `database.php`、写 README 初稿 |
-| 2 | B | 注册、登录、退出、当前用户接口 |
-| 3 | A | 注册页、登录页、登录状态显示 |
-| 4 | B | 帖子列表、详情、发布、删除、点赞接口 |
-| 5 | A | 首页、发帖表单、帖子详情页、帖子点赞/删除按钮 |
-| 6 | B | 评论发布、删除、点赞接口 |
-| 7 | A | 评论列表、评论框、评论点赞/删除按钮 |
-| 8 | B | 搜索接口、个人中心接口 |
-| 9 | A | 搜索结果展示、个人中心页面 |
-| 10 | C | 测试数据、安全检查、README 完整说明 |
+| 2 | A | 画出 5 个页面，写静态 HTML/CSS，列出每页需要的接口 |
+| 3 | B | 写 `response.php`、`auth.php`，给每个接口先返回统一 JSON |
+| 4 | A | 在 `api.js` 写请求函数；接口没好时先用假数据 |
+| 5 | B | 实现注册、登录、退出、当前用户接口 |
+| 6 | A+B | 联调注册和登录 |
+| 7 | B | 实现帖子列表、详情、发布、删除、点赞接口 |
+| 8 | A+B | 联调首页、发帖、帖子详情 |
+| 9 | B | 实现评论、搜索、个人中心接口 |
+| 10 | A+B | 联调评论、搜索、个人中心 |
+| 11 | C | 加测试数据、安全检查、README 完整说明 |
+| 12 | 全员 | 按最终验收清单逐项测试 |
 
-## 9. GitHub 协作
+## 10. GitHub 协作
 
 分支：
 
-- `main`：稳定版本
-- `feature/frontend`：成员 A
-- `feature/backend`：成员 B
-- `feature/database`：成员 C
+* 主仓库
+  - `main`：稳定版本
+  - `develop`: 开发测试版本
+
+* fork仓库
+  - `feature/frontend`：成员 A
+  - `feature/backend`：成员 B
+  - `feature/database`：成员 C
 
 规则：
 
-- 不直接往 `main` 推未完成代码。
+- 不直接往 `main` 推未完成代码，PR先提交到主仓库的`develop`分支
 - 一个功能完成后开 PR。
 - PR 写清楚：改了什么、怎么测试。
 - 至少一个队友看过再合并。
 - 每天同步：完成了什么、卡在哪里、接口字段有没有变。
+- 接口字段变化必须同步修改本指南。
 
-提交信息：
+提交信息举例：
 
 ```text
 feat: add login page
@@ -288,7 +324,7 @@ fix: prevent duplicate likes
 docs: update readme
 ```
 
-## 10. 最终验收
+## 11. 最终验收
 
 账号：
 
