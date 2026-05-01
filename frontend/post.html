@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TalkinCampus - 帖子详情</title>
+    <link rel="stylesheet" href="./css/style.css" />
+    <script src="./js/api.js" defer></script>
+    <script src="./js/auth.js" defer></script>
+    <script src="./js/posts.js" defer></script>
+    <script src="./js/comments.js" defer></script>
+  </head>
+  <body>
+    <div class="home">
+      <header class="header">
+        <div class="header-inner">
+          <div class="blogTitle">
+            <h1><a class="brand" href="./index.html">TalkinCampus</a></h1>
+            <h2>代码可以重构，情绪只能发布。</h2>
+          </div>
+        </div>
+        <nav class="navigator">
+          <div class="nav" id="nav"></div>
+        </nav>
+      </header>
+
+      <main class="main">
+        <div class="layout">
+          <div class="mainContent">
+            <div class="flash" id="flash" role="status"></div>
+
+            <article class="post-card" id="postCard"></article>
+
+            <section class="postBox">
+              <div class="postBoxTitle">发表评论</div>
+              <div class="postBoxBody">
+                <form id="commentForm">
+                  <textarea class="textarea" id="commentContent" maxlength="2000" placeholder="写下你的评论（必填）"></textarea>
+                  <div class="postBoxFooter">
+                    <span class="smallTip">当前字数：<span id="commentWordCount">0</span>/2000</span>
+                    <button class="btn" type="submit">发布评论</button>
+                  </div>
+                </form>
+              </div>
+            </section>
+
+            <section class="day">
+              <div class="dayTitle">评论列表</div>
+              <div id="comments" class="stack"></div>
+              <div class="muted" id="empty" hidden style="text-align: center; padding: 20px;">暂无评论</div>
+            </section>
+          </div>
+
+          <aside class="sideBar">
+            <section class="catList">
+              <div class="catListTitle">帖子信息</div>
+              <div class="catListBody">
+                <div class="profileItem">
+                  <span>发布时间</span>
+                  <span id="postTime">-</span>
+                </div>
+                <div class="profileItem">
+                  <span>评论数</span>
+                  <span id="postComments">0</span>
+                </div>
+                <div class="profileItem">
+                  <span>推荐数</span>
+                  <span id="postLikes">0</span>
+                </div>
+              </div>
+            </section>
+
+            <section class="catList">
+              <div class="catListTitle">操作</div>
+              <div class="catListBody">
+                <p><a href="./index.html">← 返回首页</a></p>
+              </div>
+            </section>
+          </aside>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      window.addEventListener("DOMContentLoaded", async () => {
+        const navEl = document.getElementById("nav");
+        const flashEl = document.getElementById("flash");
+        const postCardEl = document.getElementById("postCard");
+        const commentsEl = document.getElementById("comments");
+        const emptyEl = document.getElementById("empty");
+
+        const commentForm = document.getElementById("commentForm");
+        const commentContentEl = document.getElementById("commentContent");
+        const commentWordCountEl = document.getElementById("commentWordCount");
+
+        const postTimeEl = document.getElementById("postTime");
+        const postCommentsEl = document.getElementById("postComments");
+        const postLikesEl = document.getElementById("postLikes");
+
+        TC.ui.bindFlash(flashEl);
+
+        commentContentEl.addEventListener("input", () => {
+          commentWordCountEl.textContent = commentContentEl.value.length;
+        });
+
+        let currentUser = null;
+        try {
+          const res = await TC.auth.me();
+          currentUser = res?.user || null;
+        } catch (e) {
+          currentUser = null;
+        }
+        TC.ui.renderNav(navEl, currentUser);
+
+        const id = Number(TC.util.getQueryParam("id"));
+        if (!id || Number.isNaN(id)) {
+          TC.ui.flash("缺少帖子 id", "error");
+          return;
+        }
+
+        let post = null;
+        let comments = [];
+
+        const renderPost = () => {
+          TC.util.clear(postCardEl);
+
+          const title = document.createElement("h2");
+          title.className = "post-title";
+          title.textContent = post.title || "无标题";
+
+          const content = document.createElement("div");
+          content.className = "content";
+          content.textContent = post.content || "";
+
+          const meta = document.createElement("div");
+          meta.className = "meta";
+          meta.innerHTML = `posted @ ${TC.util.formatTime(post.created_at)} 匿名园友 评论(${post.comment_count || 0}) 推荐(${post.like_count || 0})`;
+
+          const actions = document.createElement("div");
+          actions.className = "row";
+          actions.style.marginTop = "12px";
+
+          const likeBtn = document.createElement("button");
+          likeBtn.type = "button";
+          likeBtn.className = "btn";
+          likeBtn.textContent = post.liked ? "已推荐" : "推荐";
+          likeBtn.addEventListener("click", async () => {
+            try {
+              await TC.auth.requireAuth("./login.html", location.href);
+              const out = await TC.posts.toggleLike(post.id);
+              post.liked = !!out.liked;
+              if (typeof out.like_count === "number") post.like_count = out.like_count;
+              renderPost();
+              updateSidebar();
+            } catch (err) {
+              TC.ui.flashError(err);
+            }
+          });
+
+          actions.appendChild(likeBtn);
+
+          if (post.can_delete) {
+            const delBtn = document.createElement("button");
+            delBtn.type = "button";
+            delBtn.className = "btn btn-danger";
+            delBtn.textContent = "删除帖子";
+            delBtn.addEventListener("click", async () => {
+              const ok = confirm("确认删除这条帖子？");
+              if (!ok) return;
+
+              try {
+                await TC.auth.requireAuth("./login.html", location.href);
+                await TC.posts.remove(post.id);
+                location.href = "./index.html";
+              } catch (err) {
+                TC.ui.flashError(err);
+              }
+            });
+            actions.appendChild(delBtn);
+          }
+
+          postCardEl.appendChild(title);
+          postCardEl.appendChild(content);
+          postCardEl.appendChild(meta);
+          postCardEl.appendChild(actions);
+        };
+
+        const updateSidebar = () => {
+          postTimeEl.textContent = TC.util.formatTime(post.created_at);
+          postCommentsEl.textContent = post.comment_count || 0;
+          postLikesEl.textContent = post.like_count || 0;
+        };
+
+        const renderComments = () => {
+          TC.util.clear(commentsEl);
+          if (!comments || comments.length === 0) {
+            emptyEl.hidden = false;
+            return;
+          }
+          emptyEl.hidden = true;
+
+          for (const c of comments) {
+            const card = TC.comments.renderCommentCard(c, {
+              onLike: async () => {
+                await TC.auth.requireAuth("./login.html", location.href);
+                const out = await TC.comments.toggleLike(c.id);
+                c.liked = !!out.liked;
+                if (typeof out.like_count === "number") c.like_count = out.like_count;
+                TC.comments.updateCommentCard(card, c);
+              },
+              onDelete: async () => {
+                await TC.auth.requireAuth("./login.html", location.href);
+                await TC.comments.remove(c.id);
+                comments = comments.filter((x) => x.id !== c.id);
+                post.comment_count = Math.max(0, (post.comment_count || 0) - 1);
+                renderPost();
+                updateSidebar();
+                renderComments();
+              },
+            });
+            commentsEl.appendChild(card);
+          }
+        };
+
+        const load = async () => {
+          const data = await TC.posts.detail(id);
+          post = data.post;
+          comments = data.comments || [];
+          renderPost();
+          updateSidebar();
+          renderComments();
+        };
+
+        commentForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const content = (commentContentEl.value || "").trim();
+          if (!content) return TC.ui.flash("评论不能为空", "error");
+
+          try {
+            await TC.auth.requireAuth("./login.html", location.href);
+            await TC.comments.create({ post_id: id, content });
+            commentContentEl.value = "";
+            commentWordCountEl.textContent = "0";
+            TC.ui.flash("评论发布成功", "success");
+            await load();
+          } catch (err) {
+            TC.ui.flashError(err);
+          }
+        });
+
+        try {
+          await load();
+        } catch (err) {
+          TC.ui.flashError(err);
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,435 @@
+:root {
+  --blue: #075db3;
+  --blue-dark: #2f6699;
+  --orange: #ff6600;
+  --border: #dddddd;
+  --light-border: #eeeeee;
+  --bg: #f5f5f5;
+  --text: #333333;
+  --muted: #666666;
+  --danger: #cc0000;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.7 Arial, Helvetica, sans-serif;
+}
+
+a {
+  color: var(--blue);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+a:hover {
+  color: var(--orange);
+  text-decoration: underline;
+}
+
+.home {
+  width: 1120px;
+  min-height: 100vh;
+  margin: 0 auto;
+  background: #fff;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+
+.header {
+  border-bottom: 1px solid var(--border);
+}
+
+.header-inner {
+  padding: 26px 32px 0;
+}
+
+.blogTitle h1 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: normal;
+  line-height: 1.2;
+}
+
+.blogTitle h1 a {
+  color: #333;
+}
+
+.blogTitle h2 {
+  margin: 8px 0 20px;
+  color: #777;
+  font-size: 13px;
+  font-weight: normal;
+}
+
+.navigator {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 12px;
+  height: 38px;
+  line-height: 38px;
+  background: var(--blue-dark);
+  overflow: hidden;
+  color: white;
+}
+
+.nav {
+  display: flex;
+  gap: 22px;
+  align-items: center;
+  min-width: 0;
+}
+
+.nav a,
+.nav button {
+  font: inherit;
+}
+
+.navigator .link {
+  color: white;
+}
+
+.navigator .link:hover {
+  color: #ffffcc;
+  text-decoration: none;
+}
+
+.navigator .btn {
+  border: 0;
+  background: transparent;
+  color: white;
+  padding: 0;
+  height: auto;
+  line-height: inherit;
+}
+
+.navigator .btn:hover {
+  color: #ffffcc;
+  background: transparent;
+}
+
+.main {
+  padding: 24px 32px 34px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 770px 280px;
+  gap: 26px;
+}
+
+.mainContent {
+  min-width: 0;
+}
+
+.sideBar {
+  font-size: 13px;
+}
+
+.card {
+  margin: 0 0 18px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  background: #fff;
+}
+
+.card-accent {
+  border: 1px solid #c9d7e6;
+  background: #f8fbff;
+}
+
+.postBox {
+  margin-bottom: 24px;
+  border: 1px solid #c9d7e6;
+  background: #f8fbff;
+}
+
+.postBoxTitle {
+  padding: 7px 10px;
+  background: #e6eef7;
+  border-bottom: 1px solid #c9d7e6;
+  color: #333;
+  font-weight: bold;
+}
+
+.postBoxBody {
+  padding: 12px;
+}
+
+.postBoxFooter {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.smallTip {
+  color: #777;
+  font-size: 12px;
+}
+
+.catList {
+  margin-bottom: 14px;
+  border: 1px solid var(--border);
+  background: #fafafa;
+}
+
+.catListTitle {
+  padding: 6px 10px;
+  background: #e6eef7;
+  border-bottom: 1px solid var(--border);
+  color: #333;
+  font-weight: bold;
+}
+
+.catListBody {
+  padding: 10px;
+}
+
+.catListBody p {
+  margin: 0 0 7px;
+}
+
+.catListBody ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.catListBody li {
+  margin: 3px 0;
+}
+
+.day {
+  margin-bottom: 24px;
+}
+
+.dayTitle {
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  color: #666;
+  font-size: 13px;
+  border-bottom: 1px solid var(--light-border);
+}
+
+.profileItem {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px dotted #ddd;
+  padding: 3px 0;
+}
+
+.profileItem:last-child {
+  border-bottom: 0;
+}
+
+.narrow {
+  width: min(520px, 100%);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.h1 {
+  margin: 0 0 12px;
+  font-size: 20px;
+  font-weight: normal;
+}
+
+.h2 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.row-between {
+  justify-content: space-between;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stack.tight {
+  gap: 4px;
+}
+
+.input {
+  width: 100%;
+  height: 28px;
+  padding: 3px 8px;
+  border: 1px solid #bbb;
+  font: 14px Arial, Helvetica, sans-serif;
+  outline: none;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+  padding: 8px;
+  border: 1px solid #bbb;
+  font: 14px/1.7 Arial, Helvetica, sans-serif;
+  outline: none;
+}
+
+.btn {
+  padding: 4px 14px;
+  border: 1px solid #999;
+  background: linear-gradient(#ffffff, #e9e9e9);
+  color: #333;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btn:hover {
+  border-color: #666;
+  background: linear-gradient(#ffffff, #dddddd);
+}
+
+.btn-ghost {
+  background: #eee;
+}
+
+.btn-danger {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: linear-gradient(#ffffff, #f0f0f0);
+}
+
+.btn-danger:hover {
+  border-color: var(--danger);
+}
+
+.flash {
+  min-height: 18px;
+  margin: 0 0 10px;
+  color: #777;
+  font-size: 12px;
+}
+
+.flash.error {
+  color: var(--danger);
+}
+
+.flash.success {
+  color: #008000;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.big {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.divider {
+  height: 1px;
+  background: var(--light-border);
+  margin: 12px 0;
+}
+
+.post-card {
+  margin-bottom: 26px;
+  padding-bottom: 2px;
+  border: 0;
+  background: transparent;
+}
+
+.post-title {
+  margin: 0 0 8px;
+  padding-bottom: 7px;
+  font-size: 20px;
+  font-weight: normal;
+  line-height: 1.45;
+  border-bottom: 1px dashed #cccccc;
+}
+
+.post-title a {
+  color: var(--blue);
+}
+
+.content {
+  margin: 10px 0 12px;
+  color: #333;
+  line-height: 1.85;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.summaryMark {
+  color: #999;
+  margin-right: 4px;
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 12px;
+  text-align: right;
+  border-bottom: 1px solid var(--light-border);
+  padding-bottom: 14px;
+}
+
+.post-card .row {
+  margin-top: 8px;
+  color: #777;
+  font-size: 12px;
+}
+
+.comment-card {
+  border: 1px solid var(--border);
+  background: #fafafa;
+  padding: 10px;
+}
+
+.comment-card .meta {
+  text-align: left;
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+@media (max-width: 900px) {
+  .home {
+    width: 100%;
+    border: 0;
+  }
+
+  .header-inner {
+    padding: 22px 18px 0;
+  }
+
+  .navigator {
+    height: auto;
+    line-height: 2.4;
+    padding: 6px 10px;
+    flex-wrap: wrap;
+  }
+
+  .main {
+    padding: 18px;
+  }
+
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sideBar {
+    order: -1;
+  }
+}
