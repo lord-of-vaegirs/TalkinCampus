@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TalkinCampus - 首页</title>
+    <link rel="stylesheet" href="./css/style.css" />
+    <script src="./js/api.js" defer></script>
+    <script src="./js/auth.js" defer></script>
+    <script src="./js/posts.js" defer></script>
+    <script src="./js/search.js" defer></script>
+  </head>
+  <body>
+    <div class="home">
+      <header class="header">
+        <div class="header-inner">
+          <div class="blogTitle">
+            <h1><a class="brand" href="./index.html">TalkinCampus</a></h1>
+            <h2>代码可以重构，情绪只能发布。</h2>
+          </div>
+        </div>
+        <nav class="navigator">
+          <div class="nav" id="nav"></div>
+        </nav>
+      </header>
+
+      <main class="main">
+        <div class="layout">
+          <div class="mainContent">
+            <div class="flash" id="flash" role="status"></div>
+
+            <section class="postBox" id="createCard" hidden>
+              <div class="postBoxTitle">发表匿名随笔</div>
+              <div class="postBoxBody">
+                <form id="createForm">
+                  <input class="input" id="title" name="title" maxlength="100" placeholder="请输入标题，例如：今天又被需求改麻了" style="margin-bottom: 10px;" />
+                  <textarea class="textarea" id="content" name="content" maxlength="5000" placeholder="请输入匿名内容。这里没有头像，没有昵称，只有 posted @ 和阅读(0)。"></textarea>
+                  <div class="postBoxFooter">
+                    <span class="smallTip">当前字数：<span id="wordCount">0</span>/5000</span>
+                    <button class="btn" type="submit">发布随笔</button>
+                  </div>
+                  <div class="smallTip" style="margin-top: 6px; color: #666;">提示：发布后不会显示你的真实用户名。</div>
+                </form>
+              </div>
+            </section>
+
+            <section class="day">
+              <div class="dayTitle" id="dayTitle">最新随笔</div>
+              <div id="posts"></div>
+              <div class="muted" id="empty" hidden style="text-align: center; padding: 20px;">暂无随笔</div>
+            </section>
+          </div>
+
+          <aside class="sideBar">
+            <section class="catList">
+              <div class="catListTitle">公告</div>
+              <div class="catListBody">
+                <p id="userGreeting">欢迎来到匿名园</p>
+                <p>这里是校园匿名墙，发帖不显示真实用户名。</p>
+              </div>
+            </section>
+
+            <section class="catList" id="profileSection" hidden>
+              <div class="catListTitle">个人资料</div>
+              <div class="catListBody">
+                <div class="profileItem">
+                  <span>用户名</span>
+                  <span id="profileUsername">-</span>
+                </div>
+                <div class="profileItem">
+                  <span>随笔</span>
+                  <span id="profilePosts">0</span>
+                </div>
+                <div class="profileItem">
+                  <span>评论</span>
+                  <span id="profileComments">0</span>
+                </div>
+                <div class="profileItem">
+                  <span>获赞</span>
+                  <span id="profileLikes">0</span>
+                </div>
+                <div class="profileItem">
+                  <span>操作</span>
+                  <span><a href="./profile.html">个人中心</a></span>
+                </div>
+              </div>
+            </section>
+
+            <section class="catList">
+              <div class="catListTitle">搜索帖子</div>
+              <div class="catListBody">
+                <form id="searchForm" autocomplete="off" style="display: flex; gap: 6px;">
+                  <input class="input" id="q" name="q" placeholder="搜索标题或内容" style="flex: 1; min-width: 0; height: 26px; font-size: 12px;" />
+                  <button class="btn" type="submit" style="width: 48px; font-size: 12px;">搜索</button>
+                </form>
+              </div>
+            </section>
+          </aside>
+        </div>
+      </main>
+
+      <footer id="footer" style="padding: 24px 20px; border-top: 1px solid var(--border); color: #777; text-align: center; font-size: 12px;">
+        Powered by TalkinCampus · 校园匿名墙 · Copyright © 2026
+      </footer>
+    </div>
+
+    <script>
+      window.addEventListener("DOMContentLoaded", async () => {
+        const navEl = document.getElementById("nav");
+        const flashEl = document.getElementById("flash");
+        const createCard = document.getElementById("createCard");
+        const postsEl = document.getElementById("posts");
+        const emptyEl = document.getElementById("empty");
+        const dayTitleEl = document.getElementById("dayTitle");
+
+        const searchForm = document.getElementById("searchForm");
+        const qInput = document.getElementById("q");
+
+        const createForm = document.getElementById("createForm");
+        const titleInput = document.getElementById("title");
+        const contentInput = document.getElementById("content");
+        const wordCountEl = document.getElementById("wordCount");
+
+        const userGreeting = document.getElementById("userGreeting");
+        const profileSection = document.getElementById("profileSection");
+        const profileUsername = document.getElementById("profileUsername");
+        const profilePosts = document.getElementById("profilePosts");
+        const profileComments = document.getElementById("profileComments");
+        const profileLikes = document.getElementById("profileLikes");
+
+        TC.ui.bindFlash(flashEl);
+
+        contentInput.addEventListener("input", () => {
+          wordCountEl.textContent = contentInput.value.length;
+        });
+
+        let currentUser = null;
+        try {
+          const res = await TC.auth.me();
+          currentUser = res?.user || null;
+        } catch (e) {
+          currentUser = null;
+        }
+        TC.ui.renderNav(navEl, currentUser);
+
+        if (currentUser) {
+          createCard.hidden = false;
+          profileSection.hidden = false;
+          userGreeting.textContent = `你好，${currentUser.username}`;
+          profileUsername.textContent = currentUser.username;
+
+          // 加载统计数据
+          try {
+            const statsRes = await TC.api.get("/backend/api/users/stats.php");
+            if (statsRes) {
+              profilePosts.textContent = statsRes.post_count || 0;
+              profileComments.textContent = statsRes.comment_count || 0;
+              profileLikes.textContent = statsRes.total_likes || 0;
+            }
+          } catch (e) {
+            // 统计数据加载失败不影响主流程
+            console.error("加载统计数据失败:", e);
+          }
+        } else {
+          createCard.hidden = true;
+          profileSection.hidden = true;
+          userGreeting.textContent = "欢迎来到匿名园，请先登录";
+        }
+
+        const renderList = (items) => {
+          TC.util.clear(postsEl);
+          if (!items || items.length === 0) {
+            emptyEl.hidden = false;
+            return;
+          }
+          emptyEl.hidden = true;
+
+          for (const p of items) {
+            const card = TC.posts.renderPostCard(p, {
+              onLike: async () => {
+                await TC.auth.requireAuth("./login.html");
+                const out = await TC.posts.toggleLike(p.id);
+                p.liked = !!out.liked;
+                if (typeof out.like_count === "number") p.like_count = out.like_count;
+                TC.posts.updatePostCard(card, p);
+              },
+            });
+            postsEl.appendChild(card);
+          }
+        };
+
+        const loadLatest = async () => {
+          const now = new Date();
+          dayTitleEl.textContent = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
+          const data = await TC.posts.list();
+          renderList(data.items || []);
+        };
+
+        const doSearch = async (q) => {
+          const s = (q || "").trim();
+          if (!s) {
+            await loadLatest();
+            return;
+          }
+          dayTitleEl.textContent = `搜索结果：${s}`;
+          const data = await TC.search.searchPosts(s);
+          renderList(data.items || []);
+        };
+
+        searchForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const q = qInput.value || "";
+          try {
+            await doSearch(q);
+          } catch (err) {
+            TC.ui.flashError(err);
+          }
+        });
+
+        createForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const title = (titleInput.value || "").trim();
+          const content = (contentInput.value || "").trim();
+
+          if (!title) return TC.ui.flash("标题不能为空", "error");
+          if (!content) return TC.ui.flash("内容不能为空", "error");
+
+          try {
+            await TC.auth.requireAuth("./login.html");
+            await TC.posts.create({ title, content });
+            titleInput.value = "";
+            contentInput.value = "";
+            wordCountEl.textContent = "0";
+            TC.ui.flash("发布成功", "success");
+            await loadLatest();
+          } catch (err) {
+            TC.ui.flashError(err);
+          }
+        });
+
+        try {
+          await loadLatest();
+        } catch (err) {
+          TC.ui.flashError(err);
+        }
+      });
+    </script>
+  </body>
+</html>

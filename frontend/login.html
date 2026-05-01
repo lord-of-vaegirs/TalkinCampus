@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TalkinCampus - 登录</title>
+    <link rel="stylesheet" href="./css/style.css" />
+    <script src="./js/api.js" defer></script>
+    <script src="./js/auth.js" defer></script>
+  </head>
+  <body>
+    <div class="home">
+      <header class="header">
+        <div class="header-inner">
+          <div class="blogTitle">
+            <h1><a class="brand" href="./index.html">TalkinCampus</a></h1>
+            <h2>代码可以重构，情绪只能发布。</h2>
+          </div>
+        </div>
+        <nav class="navigator">
+          <div class="nav" id="nav"></div>
+        </nav>
+      </header>
+
+      <main class="main">
+        <div class="flash" id="flash" role="status"></div>
+
+        <div class="layout">
+          <div class="mainContent">
+            <section class="postBox">
+              <div class="postBoxTitle">登录</div>
+              <div class="postBoxBody">
+                <form id="form" class="stack">
+                  <input class="input" id="username" name="username" placeholder="用户名" autocomplete="username" />
+                  <input class="input" id="password" name="password" type="password" placeholder="密码" autocomplete="current-password" />
+                  <div class="postBoxFooter">
+                    <button class="btn" type="submit">登录</button>
+                    <span class="smallTip">没有账号？<a class="link" href="./register.html">去注册</a></span>
+                  </div>
+                </form>
+              </div>
+            </section>
+          </div>
+
+          <aside class="sideBar">
+            <section class="catList">
+              <div class="catListTitle">公告</div>
+              <div class="catListBody">
+                <p>本站为校园匿名墙：只展示内容，不展示真实用户名。</p>
+                <p>登录后可发帖、评论、点赞与删除自己的内容。</p>
+              </div>
+            </section>
+
+            <section class="catList">
+              <div class="catListTitle">提示</div>
+              <div class="catListBody">
+                <div class="profileItem">
+                  <span>默认入口</span>
+                  <span><a class="link" href="./index.html">首页</a></span>
+                </div>
+                <div class="profileItem">
+                  <span>没有账号</span>
+                  <span><a class="link" href="./register.html">去注册</a></span>
+                </div>
+              </div>
+            </section>
+          </aside>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      window.addEventListener("DOMContentLoaded", async () => {
+        const navEl = document.getElementById("nav");
+        const flashEl = document.getElementById("flash");
+        TC.ui.bindFlash(flashEl);
+
+        let currentUser = null;
+        try {
+          const res = await TC.auth.me();
+          currentUser = res?.user || null;
+        } catch (e) {
+          currentUser = null;
+        }
+        TC.ui.renderNav(navEl, currentUser);
+
+        const form = document.getElementById("form");
+        const usernameEl = document.getElementById("username");
+        const passwordEl = document.getElementById("password");
+
+        const next = TC.util.getQueryParam("next") || "./index.html";
+
+        form.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const username = (usernameEl.value || "").trim();
+          const password = passwordEl.value || "";
+
+          if (!username) return TC.ui.flash("用户名不能为空", "error");
+          if (!password) return TC.ui.flash("密码不能为空", "error");
+
+          try {
+            await TC.auth.login({ username, password });
+            location.href = next;
+          } catch (err) {
+            TC.ui.flashError(err);
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
