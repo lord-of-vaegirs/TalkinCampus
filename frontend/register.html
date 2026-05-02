@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TalkinCampus - 注册</title>
+    <link rel="stylesheet" href="./css/style.css" />
+    <script src="./js/api.js" defer></script>
+    <script src="./js/auth.js" defer></script>
+  </head>
+  <body>
+    <div class="home">
+      <header class="header">
+        <div class="header-inner">
+          <div class="blogTitle">
+            <h1><a class="brand" href="./index.html">TalkinCampus</a></h1>
+            <h2>代码可以重构，情绪只能发布。</h2>
+          </div>
+        </div>
+        <nav class="navigator">
+          <div class="nav" id="nav"></div>
+        </nav>
+      </header>
+
+      <main class="main">
+        <div class="flash" id="flash" role="status"></div>
+
+        <div class="layout">
+          <div class="mainContent">
+            <section class="postBox">
+              <div class="postBoxTitle">注册</div>
+              <div class="postBoxBody">
+                <form id="form" class="stack">
+                  <input class="input" id="username" name="username" placeholder="用户名（唯一）" autocomplete="username" />
+                  <input class="input" id="nickname" name="nickname" placeholder="昵称（仅本人可见）" autocomplete="nickname" />
+                  <input class="input" id="password" name="password" type="password" placeholder="密码" autocomplete="new-password" />
+                  <div class="postBoxFooter">
+                    <button class="btn" type="submit">注册</button>
+                    <span class="smallTip">已有账号？<a class="link" href="./login.html">去登录</a></span>
+                  </div>
+                </form>
+              </div>
+            </section>
+          </div>
+
+          <aside class="sideBar">
+            <section class="catList">
+              <div class="catListTitle">公告</div>
+              <div class="catListBody">
+                <p>注册后昵称仅本人可见；首页与详情页不展示真实用户名。</p>
+                <p>请使用强密码，避免与其他网站重复。</p>
+              </div>
+            </section>
+
+            <section class="catList">
+              <div class="catListTitle">快捷入口</div>
+              <div class="catListBody">
+                <div class="profileItem">
+                  <span>已有账号</span>
+                  <span><a class="link" href="./login.html">去登录</a></span>
+                </div>
+                <div class="profileItem">
+                  <span>返回首页</span>
+                  <span><a class="link" href="./index.html">首页</a></span>
+                </div>
+              </div>
+            </section>
+          </aside>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      window.addEventListener("DOMContentLoaded", async () => {
+        const navEl = document.getElementById("nav");
+        const flashEl = document.getElementById("flash");
+        TC.ui.bindFlash(flashEl);
+
+        TC.ui.renderNav(navEl, null);
+
+        const form = document.getElementById("form");
+        const usernameEl = document.getElementById("username");
+        const nicknameEl = document.getElementById("nickname");
+        const passwordEl = document.getElementById("password");
+
+        form.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const username = (usernameEl.value || "").trim();
+          const nickname = (nicknameEl.value || "").trim();
+          const password = passwordEl.value || "";
+
+          if (!username) return TC.ui.flash("用户名不能为空", "error");
+          if (!nickname) return TC.ui.flash("昵称不能为空", "error");
+          if (!password) return TC.ui.flash("密码不能为空", "error");
+
+          try {
+            await TC.auth.register({ username, password, nickname });
+            location.href = "./login.html";
+          } catch (err) {
+            TC.ui.flashError(err);
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

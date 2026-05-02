@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TalkinCampus - 个人中心</title>
+    <link rel="stylesheet" href="./css/style.css" />
+    <script src="./js/api.js" defer></script>
+    <script src="./js/auth.js" defer></script>
+    <script src="./js/posts.js" defer></script>
+    <script src="./js/comments.js" defer></script>
+    <script src="./js/profile.js" defer></script>
+  </head>
+  <body>
+    <div class="home">
+      <header class="header">
+        <div class="header-inner">
+          <div class="blogTitle">
+            <h1><a class="brand" href="./index.html">TalkinCampus</a></h1>
+            <h2>代码可以重构，情绪只能发布。</h2>
+          </div>
+        </div>
+        <nav class="navigator">
+          <div class="nav" id="nav"></div>
+        </nav>
+      </header>
+
+      <main class="main">
+        <div class="flash" id="flash" role="status"></div>
+
+        <section class="card">
+          <h1 class="h1">个人中心</h1>
+          <div id="me" class="stack"></div>
+        </section>
+
+        <section class="card">
+          <h2 class="h2">我发布的帖子</h2>
+          <div id="myPosts" class="stack"></div>
+          <div class="muted" id="myPostsEmpty" hidden>暂无帖子</div>
+        </section>
+
+        <section class="card">
+          <h2 class="h2">我发布的评论</h2>
+          <div id="myComments" class="stack"></div>
+          <div class="muted" id="myCommentsEmpty" hidden>暂无评论</div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      window.addEventListener("DOMContentLoaded", async () => {
+        const navEl = document.getElementById("nav");
+        const flashEl = document.getElementById("flash");
+        const meEl = document.getElementById("me");
+        const myPostsEl = document.getElementById("myPosts");
+        const myPostsEmptyEl = document.getElementById("myPostsEmpty");
+        const myCommentsEl = document.getElementById("myComments");
+        const myCommentsEmptyEl = document.getElementById("myCommentsEmpty");
+
+        TC.ui.bindFlash(flashEl);
+
+        try {
+          await TC.auth.requireAuth("./login.html", location.href);
+        } catch (e) {
+          return;
+        }
+
+        let currentUser = null;
+        try {
+          const res = await TC.auth.me();
+          currentUser = res?.user || null;
+        } catch (e) {
+          currentUser = null;
+        }
+        TC.ui.renderNav(navEl, currentUser);
+
+        const renderMe = (u) => {
+          TC.util.clear(meEl);
+
+          const line1 = document.createElement("div");
+          line1.className = "row row-between";
+          const left = document.createElement("div");
+          left.className = "stack tight";
+
+          const nickname = document.createElement("div");
+          nickname.className = "big";
+          nickname.textContent = u.nickname || "";
+
+          const username = document.createElement("div");
+          username.className = "muted";
+          username.textContent = `用户名：${u.username || ""}`;
+
+          left.appendChild(nickname);
+          left.appendChild(username);
+
+          const right = document.createElement("div");
+          right.className = "muted";
+          right.textContent = `创建时间：${TC.util.formatTime(u.created_at)}`;
+
+          line1.appendChild(left);
+          line1.appendChild(right);
+
+          const bio = document.createElement("div");
+          bio.className = "content muted";
+          bio.textContent = u.bio || "";
+
+          meEl.appendChild(line1);
+          meEl.appendChild(bio);
+        };
+
+        const renderMyPosts = (items) => {
+          TC.util.clear(myPostsEl);
+          if (!items || items.length === 0) {
+            myPostsEmptyEl.hidden = false;
+            return;
+          }
+          myPostsEmptyEl.hidden = true;
+
+          for (const p of items) {
+            const card = TC.posts.renderPostCard(p, {
+              onLike: async () => {
+                const out = await TC.posts.toggleLike(p.id);
+                p.liked = !!out.liked;
+                if (typeof out.like_count === "number") p.like_count = out.like_count;
+                TC.posts.updatePostCard(card, p);
+              },
+            });
+            myPostsEl.appendChild(card);
+          }
+        };
+
+        const renderMyComments = (items) => {
+          TC.util.clear(myCommentsEl);
+          if (!items || items.length === 0) {
+            myCommentsEmptyEl.hidden = false;
+            return;
+          }
+          myCommentsEmptyEl.hidden = true;
+
+          for (const c of items) {
+            const card = TC.comments.renderCommentCard(c, {
+              showPostLink: true,
+              onLike: async () => {
+                const out = await TC.comments.toggleLike(c.id);
+                c.liked = !!out.liked;
+                if (typeof out.like_count === "number") c.like_count = out.like_count;
+                TC.comments.updateCommentCard(card, c);
+              },
+              onDelete: async () => {
+                await TC.comments.remove(c.id);
+                const data = await TC.profile.me();
+                renderMyComments(data.comments || []);
+              },
+            });
+            myCommentsEl.appendChild(card);
+          }
+        };
+
+        try {
+          const data = await TC.profile.me();
+          renderMe(data.user);
+          renderMyPosts(data.posts || []);
+          renderMyComments(data.comments || []);
+        } catch (err) {
+          TC.ui.flashError(err);
+        }
+      });
+    </script>
+  </body>
+</html>
