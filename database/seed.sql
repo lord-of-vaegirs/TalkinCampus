@@ -1,9 +1,9 @@
 USE talkincampus;
 
 INSERT INTO users (id, username, password_hash, nickname, bio) VALUES
-  (1, 'alice', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llCibRKnD/DSCyrV6L6', 'Alice', '测试用户 Alice'),
-  (2, 'bob', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llCibRKnD/DSCyrV6L6', 'Bob', '测试用户 Bob'),
-  (3, 'charlie', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llCibRKnD/DSCyrV6L6', 'Charlie', '测试用户 Charlie');
+  (1, 'alice', '$2y$10$Ok3nxydJ/d2V.Sy6xclUO.DCu.HCy9kdpMAMhKPaPdPZc0hjeoiym', 'Alice', '测试用户 Alice'),
+  (2, 'bob', '$2y$10$Ok3nxydJ/d2V.Sy6xclUO.DCu.HCy9kdpMAMhKPaPdPZc0hjeoiym', 'Bob', '测试用户 Bob'),
+  (3, 'charlie', '$2y$10$Ok3nxydJ/d2V.Sy6xclUO.DCu.HCy9kdpMAMhKPaPdPZc0hjeoiym', 'Charlie', '测试用户 Charlie');
 
 INSERT INTO posts (id, user_id, title, content, created_at) VALUES
   (1, 1, '图书馆自习区推荐', '最近期末复习，大家觉得哪个自习区比较安静？', '2026-04-30 09:00:00'),
