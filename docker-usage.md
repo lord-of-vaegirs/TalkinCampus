@@ -1,55 +1,90 @@
-# TalkinCampus Docker 启动与测试流程
+# TalkinCampus Docker 本地使用说明
 
-## 1. 前置条件
+这份文档用于在本机通过 Docker 启动 TalkinCampus 服务。项目已经把 PHP/Apache 后端和 MySQL 数据库打包进 Docker，不需要手动安装 PHP、Apache 或 MySQL。
 
-- 已安装 Docker Desktop
-- 当前项目目录：`d:\Code\web\co-work\TalkinCampus`
+## 1. 准备工作
 
-## 2. 首次启动
+请先确认本机已经安装并启动 Docker Desktop。
+
+在终端进入项目根目录，也就是包含 `Dockerfile` 和 `docker-compose.yml` 的目录：
+
+```bash
+cd TalkinCampus
+```
+
+如果你的 Docker 版本较新，推荐使用 `docker compose` 命令；如果本机只支持旧版命令，可以把下面命令里的 `docker compose` 替换成 `docker-compose`。
+
+## 2. 首次启动服务
 
 在项目根目录执行：
 
 ```bash
-docker-compose down -v
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
-说明：
+这个命令会完成三件事：
 
-- `--build` 会重新构建 `app` 镜像，安装 PHP 的 `pdo_mysql` 扩展
-- `down -v` 会删除旧容器和数据库卷，确保 MySQL 重新执行 `database/schema.sql` 与 `database/seed.sql`
+- 构建 `app` 镜像，镜像内包含 PHP 8.2、Apache 和 `pdo_mysql` 扩展。
+- 启动 `db` 容器，使用 MySQL 8.0。
+- 初始化数据库，自动执行 `database/schema.sql` 和 `database/seed.sql`。
 
-## 3. 检查容器状态
+启动成功后，本机服务地址是：
 
-执行：
+```text
+http://localhost:8080/frontend/index.html
+```
+
+## 3. 检查运行状态
+
+查看容器是否正常运行：
 
 ```bash
-docker-compose ps
+docker compose ps
 ```
 
-正常情况下应看到：
+正常情况下应该看到：
 
-- `db` 容器状态为 `healthy`
-- `app` 容器状态为 `Up`
+- `db` 状态为 `healthy`。
+- `app` 状态为 `Up`。
 
-如果需要查看日志：
+如果页面打不开或接口报错，可以查看日志：
 
 ```bash
-docker-compose logs --tail=200 app db
+docker compose logs --tail=200 app db
 ```
 
-## 4. 打开项目
+只看后端容器日志：
 
-浏览器访问：
+```bash
+docker compose logs --tail=200 app
+```
 
-- 首页：`http://localhost:8080/frontend/index.html`
-- 登录页：`http://localhost:8080/frontend/login.html`
-- 注册页：`http://localhost:8080/frontend/register.html`
-- 个人中心：`http://localhost:8080/frontend/profile.html`
+只看数据库容器日志：
+
+```bash
+docker compose logs --tail=200 db
+```
+
+## 4. 访问页面
+
+浏览器打开以下地址：
+
+```text
+首页：http://localhost:8080/frontend/index.html
+登录：http://localhost:8080/frontend/login.html
+注册：http://localhost:8080/frontend/register.html
+个人中心：http://localhost:8080/frontend/profile.html
+```
+
+帖子详情页一般通过首页帖子列表点击进入，也可以直接访问：
+
+```text
+http://localhost:8080/frontend/post.html?id=1
+```
 
 ## 5. 测试账号
 
-数据库初始化后会自动导入测试数据，可以直接登录：
+数据库初始化后会自动导入测试数据，可以直接使用以下账号登录：
 
 ```text
 alice / password
@@ -57,79 +92,111 @@ bob / password
 charlie / password
 ```
 
-## 6. 推荐测试顺序
+也可以在注册页创建新账号。新账号只保存在当前 Docker 数据库容器里。
 
-### 账号
+## 6. 常用操作
 
-1. 打开登录页
-2. 使用 `alice / password` 登录
-3. 刷新首页，确认仍保持登录状态
-4. 点击退出，确认回到未登录状态
-5. 再进入注册页，注册一个新账号确认注册功能正常
+暂停服务但保留当前容器数据：
 
-### 帖子
+```bash
+docker compose stop
+```
 
-1. 登录后打开首页
-2. 确认首页出现发帖框
-3. 发布一个测试帖子
-4. 确认新帖子出现在首页列表
-5. 点击帖子进入详情页
-6. 确认自己发布的帖子可以删除，其他人的帖子不能删除
+重新启动已经暂停的服务：
 
-### 评论
+```bash
+docker compose start
+```
 
-1. 在帖子详情页输入评论并提交
-2. 确认评论出现在评论列表
-3. 确认自己的评论可以删除
-4. 换另一个账号登录，确认不能删除别人的评论
+重启服务：
 
-### 点赞
+```bash
+docker compose restart
+```
 
-1. 对帖子点击“推荐”
-2. 确认推荐数增加
-3. 再点一次确认取消推荐
-4. 对评论执行同样操作
+停止并删除容器：
 
-### 搜索
+```bash
+docker compose down
+```
 
-1. 在首页右侧输入关键词
-2. 确认能搜索出标题或内容包含关键词的帖子
+注意：当前 `docker-compose.yml` 没有为 MySQL 配置独立数据卷，执行 `docker compose down` 会删除数据库容器，数据库会在下次启动时重新初始化。日常只想临时关闭服务时，请优先使用 `docker compose stop`。
 
-### 个人中心
+如果你修改了 `Dockerfile`、`docker-compose.yml`、后端依赖或初始化 SQL，建议重新构建：
 
-1. 打开 `http://localhost:8080/frontend/profile.html`
-2. 确认能看到自己的资料
-3. 确认能看到自己的帖子和评论
-4. 确认首页右侧显示帖子数、评论数、获赞数
+```bash
+docker compose up -d --build
+```
 
-## 7. 匿名要求检查
+如果想彻底恢复到初始测试数据，可以执行：
 
-需要重点确认以下内容：
+```bash
+docker compose down
+docker compose up -d --build
+```
 
-- 首页不显示真实用户名
-- 帖子详情不显示真实用户名
-- 评论列表不显示真实用户名
-- 没有用户搜索接口
-- 没有其他用户主页
+## 7. 服务配置说明
+
+`docker-compose.yml` 中启动了两个服务：
+
+```text
+app：PHP 8.2 + Apache，映射到本机 http://localhost:8080
+db：MySQL 8.0，映射到本机 3306 端口
+```
+
+后端容器连接数据库时使用以下环境变量：
+
+```text
+DB_HOST=db
+DB_NAME=talkincampus
+DB_USER=root
+DB_PASS=your_password
+```
+
+数据库初始化文件位于：
+
+```text
+database/schema.sql
+database/seed.sql
+```
+
+前端和后端代码以目录挂载方式进入容器：
+
+```text
+frontend -> /var/www/html/frontend
+backend  -> /var/www/html/backend
+```
+
+因此修改本地 `frontend` 或 `backend` 目录下的代码后，通常刷新浏览器即可看到效果。
 
 ## 8. 接口快速检查
 
-可以直接在浏览器开发者工具的 `Network` 面板中查看请求结果，或直接访问以下接口：
+可以在浏览器开发者工具的 Network 面板查看接口请求，也可以直接访问以下 GET 接口：
 
 ```text
-GET  /backend/api/posts/list.php
-GET  /backend/api/posts/detail.php?id=1
-GET  /backend/api/search/search.php?q=图书馆
-GET  /backend/api/auth/me.php
-GET  /backend/api/users/me.php
-GET  /backend/api/users/stats.php
-POST /backend/api/auth/login.php
-POST /backend/api/auth/register.php
-POST /backend/api/posts/create.php
-POST /backend/api/comments/create.php
+http://localhost:8080/backend/api/posts/list.php
+http://localhost:8080/backend/api/posts/detail.php?id=1
+http://localhost:8080/backend/api/search/search.php?q=图书馆
+http://localhost:8080/backend/api/auth/me.php
+http://localhost:8080/backend/api/users/me.php
+http://localhost:8080/backend/api/users/stats.php
 ```
 
-统一返回格式：
+需要登录态或表单数据的接口建议通过页面操作测试：
+
+```text
+POST /backend/api/auth/login.php
+POST /backend/api/auth/register.php
+POST /backend/api/auth/logout.php
+POST /backend/api/posts/create.php
+POST /backend/api/posts/delete.php
+POST /backend/api/posts/toggle_like.php
+POST /backend/api/comments/create.php
+POST /backend/api/comments/delete.php
+POST /backend/api/comments/toggle_like.php
+```
+
+接口统一返回 JSON，格式类似：
 
 ```json
 {
@@ -139,56 +206,106 @@ POST /backend/api/comments/create.php
 }
 ```
 
-## 9. 常见问题
+## 9. 推荐验收流程
+
+账号功能：
+
+1. 打开登录页。
+2. 使用 `alice / password` 登录。
+3. 刷新首页，确认仍保持登录状态。
+4. 点击退出，确认回到未登录状态。
+5. 打开注册页，注册一个新账号。
+
+帖子功能：
+
+1. 登录后打开首页。
+2. 发布一条测试帖子。
+3. 确认新帖子出现在首页列表。
+4. 点击帖子进入详情页。
+5. 确认自己发布的帖子可以删除，其他人的帖子不能删除。
+
+评论功能：
+
+1. 在帖子详情页输入评论并提交。
+2. 确认评论出现在评论列表。
+3. 确认自己的评论可以删除。
+4. 换另一个账号登录，确认不能删除别人的评论。
+
+点赞功能：
+
+1. 对帖子点击推荐。
+2. 确认推荐数增加。
+3. 再点一次，确认取消推荐。
+4. 对评论执行同样操作。
+
+搜索和个人中心：
+
+1. 在首页搜索框输入关键词。
+2. 确认能搜索出标题或内容包含关键词的帖子。
+3. 打开个人中心，确认能看到自己的资料、帖子和评论。
+4. 确认首页侧边栏能显示帖子数、评论数、获赞数。
+
+## 10. 常见问题
+
+### 端口被占用
+
+如果 `8080` 被占用，修改 `docker-compose.yml` 中 `app` 的端口映射：
+
+```yaml
+ports:
+  - "8081:80"
+```
+
+然后重新启动：
+
+```bash
+docker compose up -d --build
+```
+
+访问地址也要改为：
+
+```text
+http://localhost:8081/frontend/index.html
+```
+
+如果 `3306` 被本机 MySQL 占用，可以修改 `db` 的端口映射，例如：
+
+```yaml
+ports:
+  - "3307:3306"
+```
+
+容器内部仍然使用 `DB_HOST=db` 连接，不需要改后端配置。
 
 ### 数据库连接失败
 
-请按顺序检查：
-
-1. 是否使用了最新命令重新构建：
+按顺序检查：
 
 ```bash
-docker-compose down -v
-docker-compose up -d --build
+docker compose ps
+docker compose logs --tail=200 db
+docker compose logs --tail=200 app
 ```
 
-2. `db` 是否已经 `healthy`：
+重点确认 `db` 是否已经变成 `healthy`，以及 `app` 日志里是否出现数据库连接错误。
+
+### 修改 SQL 后没有生效
+
+MySQL 官方镜像只会在数据库首次初始化时执行 `/docker-entrypoint-initdb.d` 里的脚本。当前项目中，重新创建数据库容器即可重新导入：
 
 ```bash
-docker-compose ps
-```
-
-3. `app` 日志里是否还有报错：
-
-```bash
-docker-compose logs --tail=200 app
-```
-
-4. `db` 日志里是否成功执行了初始化 SQL：
-
-```bash
-docker-compose logs --tail=200 db
-```
-
-### 修改了 SQL 但没有生效
-
-MySQL 官方镜像只会在“首次初始化数据库”时执行 `docker-entrypoint-initdb.d` 里的脚本。
-
-如果你改了 `database/schema.sql` 或 `database/seed.sql`，需要重新初始化：
-
-```bash
-docker-compose down -v
-docker-compose up -d --build
-```
-
-### 查看容器内环境变量
-
-```bash
-docker-compose exec app env
+docker compose down
+docker compose up -d --build
 ```
 
 ### 进入数据库容器
 
 ```bash
-docker-compose exec db mysql -uroot -pyour_password talkincampus
+docker compose exec db mysql -uroot -pyour_password talkincampus
+```
+
+### 查看后端容器环境变量
+
+```bash
+docker compose exec app env
 ```
