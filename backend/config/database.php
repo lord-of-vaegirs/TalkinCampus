@@ -25,7 +25,7 @@ try {
     echo json_encode([
         'success' => false,
         'message' => '数据库连接失败',
-        'data' => null,
+        'data' => (object) [],
     ], JSON_UNESCAPED_UNICODE);
 
     exit;
