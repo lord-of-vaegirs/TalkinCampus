@@ -1,6 +1,15 @@
 USE talkincampus;
 
 SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+TRUNCATE TABLE comment_likes;
+TRUNCATE TABLE post_likes;
+TRUNCATE TABLE comments;
+TRUNCATE TABLE posts;
+TRUNCATE TABLE users;
+
+SET FOREIGN_KEY_CHECKS = 1;
 
 INSERT INTO users (id, username, password_hash, nickname, bio) VALUES
   (1, 'alice', '$2y$10$Ok3nxydJ/d2V.Sy6xclUO.DCu.HCy9kdpMAMhKPaPdPZc0hjeoiym', 'Alice', CONVERT(0xE6B58BE8AF95E794A8E688B720416C696365 USING utf8mb4)),

@@ -14,11 +14,11 @@ if ($password === '') {
     respond_error('密码不能为空');
 }
 
-if (mb_strlen($password) < 6) {
+if (string_length($password) < 6) {
     respond_error('密码长度不能少于 6 个字符');
 }
 
-if (mb_strlen($password) > 255) {
+if (string_length($password) > 255) {
     respond_error('密码长度不能超过 255 个字符');
 }
 

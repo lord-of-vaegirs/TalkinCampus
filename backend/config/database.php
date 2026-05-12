@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-$dbHost = getenv('DB_HOST') ?: '127.0.0.1';
+$dbHost = getenv('DB_HOST') ?: 'localhost';
 $dbName = getenv('DB_NAME') ?: 'talkincampus';
 $dbUser = getenv('DB_USER') ?: 'admin';
 $dbPass = getenv('DB_PASS') ?: 'admin';

@@ -51,7 +51,7 @@ function get_page_size_value(): int
 
 function validate_string_length(string $value, string $label, int $maxLength, int $minLength = 1): void
 {
-    $length = mb_strlen($value);
+    $length = string_length($value);
 
     if ($length < $minLength) {
         respond_error($label . '不能为空');
@@ -60,6 +60,15 @@ function validate_string_length(string $value, string $label, int $maxLength, in
     if ($length > $maxLength) {
         respond_error($label . '长度不能超过' . $maxLength . '个字符');
     }
+}
+
+function string_length(string $value): int
+{
+    if (function_exists('mb_strlen')) {
+        return mb_strlen($value);
+    }
+
+    return strlen($value);
 }
 
 function get_optional_positive_int(mixed $value, int $defaultValue, int $minValue = 1, int $maxValue = PHP_INT_MAX): int

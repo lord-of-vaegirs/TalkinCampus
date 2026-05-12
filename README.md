@@ -187,6 +187,7 @@ docker compose down
 ```text
 PHP 8.x
 PHP PDO MySQL 扩展
+PHP mbstring 扩展（建议安装，用于更准确地处理中文长度）
 MySQL 8.x 或兼容版本
 ```
 
@@ -230,7 +231,7 @@ DB_PASS
 如果没有设置环境变量，会使用以下默认值：
 
 ```text
-DB_HOST=127.0.0.1
+DB_HOST=localhost
 DB_NAME=talkincampus
 DB_USER=admin
 DB_PASS=admin

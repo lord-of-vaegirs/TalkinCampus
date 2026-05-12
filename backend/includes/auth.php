@@ -11,8 +11,22 @@ function start_session_if_needed(): void
     ini_set('session.use_strict_mode', '1');
     ini_set('session.use_only_cookies', '1');
     ini_set('session.cookie_httponly', '1');
+    ini_set('session.cookie_path', get_session_cookie_path());
 
     session_start();
+}
+
+function get_session_cookie_path(): string
+{
+    $scriptName = (string) ($_SERVER['SCRIPT_NAME'] ?? '');
+    $backendPos = strpos($scriptName, '/backend/');
+
+    if ($backendPos === false) {
+        return '/';
+    }
+
+    $basePath = substr($scriptName, 0, $backendPos);
+    return $basePath === '' ? '/' : $basePath . '/';
 }
 
 function get_current_user_id(): ?int
