@@ -7,6 +7,8 @@
 - `schema.sql`：创建 `talkincampus` 数据库、项目数据库用户和项目所需数据表。
 - `seed.sql`：插入测试用户、测试帖子、测试评论和点赞数据。
 
+建议 PHP 安装 `pdo_mysql` 和 `mbstring` 扩展；项目没有 `mbstring` 时可以运行，但中文长度校验会降级为字节长度。
+
 ## 初始化数据库
 
 如果 Kali / Linux 上的 MySQL root 使用系统认证，推荐在项目根目录运行：
@@ -49,7 +51,7 @@ charlie / password
 后端连接数据库时建议使用项目专用用户，不要使用 root：
 
 ```text
-DB_HOST=127.0.0.1
+DB_HOST=localhost
 DB_NAME=talkincampus
 DB_USER=admin
 DB_PASS=admin
@@ -58,7 +60,7 @@ DB_PASS=admin
 如果后端使用环境变量，可以这样设置：
 
 ```bash
-export DB_HOST=127.0.0.1
+export DB_HOST=localhost
 export DB_NAME=talkincampus
 export DB_USER=admin
 export DB_PASS=admin

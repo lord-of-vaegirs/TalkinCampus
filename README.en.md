@@ -187,6 +187,7 @@ Install the following locally:
 ```text
 PHP 8.x
 PHP PDO MySQL extension
+PHP mbstring extension (recommended for accurate Chinese string length checks)
 MySQL 8.x or a compatible version
 ```
 
@@ -230,7 +231,7 @@ DB_PASS
 If no environment variables are set, it uses these defaults:
 
 ```text
-DB_HOST=127.0.0.1
+DB_HOST=localhost
 DB_NAME=talkincampus
 DB_USER=admin
 DB_PASS=admin
