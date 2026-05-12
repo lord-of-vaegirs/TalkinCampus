@@ -279,7 +279,28 @@ http://localhost:8080/frontend/index.html
 http://localhost/frontend/index.html
 ```
 
-部署时请保持 `frontend` 和 `backend` 在同一个站点根目录下。当前前端以 `/backend/...` 绝对路径请求后端接口，不需要额外配置跨域，但不建议直接部署到 `/TalkinCampus/` 这类子路径下，除非同步调整前端接口基础路径。
+部署时请保持 `frontend` 和 `backend` 在同一个站点根目录下。
+
+如果本机需要同时部署多个类似项目，可以把不同项目放在 `/var/www/html/` 下的不同子目录，例如：
+
+```text
+/var/www/html/TalkinCampus
+/var/www/html/OtherCampus
+```
+
+然后访问：
+
+```text
+http://localhost/TalkinCampus/frontend/index.html
+```
+
+前端会根据当前页面路径自动把接口请求转换为同一项目目录下的后端路径，例如：
+
+```text
+/TalkinCampus/backend/api/posts/list.php
+```
+
+因此不要直接访问 `http://localhost/TalkinCampus/frontend/` 目录本身；如果服务器没有配置目录默认页，可能会出现 403 或 404。请访问明确的页面文件，例如 `/frontend/index.html`。
 
 ## 接口说明
 

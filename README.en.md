@@ -279,7 +279,28 @@ The URL should look like:
 http://localhost/frontend/index.html
 ```
 
-Keep `frontend` and `backend` under the same site root. The current frontend calls backend APIs with absolute paths like `/backend/...`, so no CORS configuration is needed. Deployment under a subpath such as `/TalkinCampus/` is not recommended unless the frontend API base path is adjusted accordingly.
+Keep `frontend` and `backend` under the same site root.
+
+If you need to deploy multiple similar projects on the same local server, place them under different subdirectories in `/var/www/html/`, for example:
+
+```text
+/var/www/html/TalkinCampus
+/var/www/html/OtherCampus
+```
+
+Then visit:
+
+```text
+http://localhost/TalkinCampus/frontend/index.html
+```
+
+The frontend automatically maps API requests to the backend path under the same project directory, for example:
+
+```text
+/TalkinCampus/backend/api/posts/list.php
+```
+
+Do not visit the directory URL `http://localhost/TalkinCampus/frontend/` directly. If the web server has no directory index configured, it may return 403 or 404. Visit an explicit page file such as `/frontend/index.html`.
 
 ## API Overview
 

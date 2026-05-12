@@ -21,6 +21,23 @@
     return usp;
   };
 
+  const getAppBase = () => {
+    if (typeof TC.appBase === "string") {
+      return TC.appBase.replace(/\/$/, "");
+    }
+
+    const marker = "/frontend/";
+    const idx = window.location.pathname.indexOf(marker);
+    if (idx < 0) return "";
+    return window.location.pathname.slice(0, idx);
+  };
+
+  const resolvePath = (path) => {
+    if (!path || /^(https?:)?\/\//i.test(path)) return path;
+    if (!path.startsWith("/backend/")) return path;
+    return `${getAppBase()}${path}`;
+  };
+
   const safeMessage = (err) => {
     if (!err) return "请求失败";
     if (typeof err === "string") return err;
@@ -29,7 +46,7 @@
   };
 
   const request = async (path, { method = "GET", params, data } = {}) => {
-    const url = `${path}${toQuery(params)}`;
+    const url = `${resolvePath(path)}${toQuery(params)}`;
 
     const init = {
       method,
