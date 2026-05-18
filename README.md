@@ -83,7 +83,7 @@ TalkinCampus/
 
 ## 方式一：使用 Docker 本地启动
 
-Docker 是最推荐的本地启动方式。它会同时启动 PHP/Apache 服务和 MySQL 数据库，不需要手动安装 PHP、Apache 或 MySQL。
+Docker 是最推荐的本地启动方式。它会启动一个容器，容器内同时运行 PHP/Apache 服务和 MySQL 数据库，不需要手动安装 PHP、Apache 或 MySQL。
 
 ### 1. 准备环境
 
@@ -103,11 +103,10 @@ cd TalkinCampus
 docker compose up -d --build
 ```
 
-该命令会启动两个容器：
+该命令会启动一个容器：
 
 ```text
-app：PHP 8.2 + Apache，对外端口为 8080
-db：MySQL 8.0，对外端口为 3306
+app：PHP 8.2 + Apache + MariaDB，对外端口为 18083
 ```
 
 数据库会自动执行：
@@ -122,16 +121,16 @@ database/seed.sql
 浏览器打开：
 
 ```text
-http://localhost:8080/frontend/index.html
+http://localhost:18083/frontend/index.html
 ```
 
 常用页面：
 
 ```text
-首页：http://localhost:8080/frontend/index.html
-登录：http://localhost:8080/frontend/login.html
-注册：http://localhost:8080/frontend/register.html
-个人中心：http://localhost:8080/frontend/profile.html
+首页：http://localhost:18083/frontend/index.html
+登录：http://localhost:18083/frontend/login.html
+注册：http://localhost:18083/frontend/register.html
+个人中心：http://localhost:18083/frontend/profile.html
 ```
 
 ### 4. 测试账号
@@ -153,7 +152,7 @@ docker compose ps
 查看日志：
 
 ```bash
-docker compose logs --tail=200 app db
+docker compose logs --tail=200 app
 ```
 
 暂停服务但保留当前容器数据：
@@ -174,7 +173,7 @@ docker compose start
 docker compose down
 ```
 
-当前 `docker-compose.yml` 没有为 MySQL 配置独立数据卷，因此执行 `docker compose down` 后，数据库容器会被删除，下次启动会重新导入初始化数据。更完整的 Docker 使用说明见 [docker-usage.md](docker-usage.md)。
+当前 `docker-compose.yml` 只定义了一个 `app` 服务。执行 `docker compose down` 后容器会被删除，下次启动会重新导入初始化数据。更完整的 Docker 使用说明见 [docker-usage.md](docker-usage.md)。
 
 ## 方式二：普通 PHP/MySQL 本地部署
 
@@ -248,13 +247,13 @@ backend/config/database.php
 这是最轻量的普通本地启动方式。在项目根目录执行：
 
 ```bash
-php -S localhost:8080
+php -S localhost:18083
 ```
 
 然后访问：
 
 ```text
-http://localhost:8080/frontend/index.html
+http://localhost:18083/frontend/index.html
 ```
 
 注意：前端请求路径使用 `/backend/...`，因此前端页面和后端接口需要从同一个站点根目录访问。不要直接双击打开 `frontend/index.html`，否则接口路径和 Session Cookie 可能无法正常工作。
