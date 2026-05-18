@@ -83,7 +83,7 @@ TalkinCampus/
 
 ## Option 1: Run Locally with Docker
 
-Docker is the recommended local startup method. It starts both the PHP/Apache application service and the MySQL database, so you do not need to install PHP, Apache, or MySQL manually.
+Docker is the recommended local startup method. It starts one container that runs both PHP/Apache and the database, so you do not need to install PHP, Apache, or MySQL manually.
 
 ### 1. Prepare the Environment
 
@@ -103,11 +103,10 @@ If your Docker version is older, replace `docker compose` with `docker-compose` 
 docker compose up -d --build
 ```
 
-This command starts two containers:
+This command starts one container:
 
 ```text
-app: PHP 8.2 + Apache, exposed on local port 8080
-db: MySQL 8.0, exposed on local port 3306
+app: PHP 8.2 + Apache + MariaDB, exposed on local port 18083
 ```
 
 The database automatically runs:
@@ -122,16 +121,16 @@ database/seed.sql
 Open this URL in your browser:
 
 ```text
-http://localhost:8080/frontend/index.html
+http://localhost:18083/frontend/index.html
 ```
 
 Common pages:
 
 ```text
-Home:    http://localhost:8080/frontend/index.html
-Login:   http://localhost:8080/frontend/login.html
-Sign up: http://localhost:8080/frontend/register.html
-Profile: http://localhost:8080/frontend/profile.html
+Home:    http://localhost:18083/frontend/index.html
+Login:   http://localhost:18083/frontend/login.html
+Sign up: http://localhost:18083/frontend/register.html
+Profile: http://localhost:18083/frontend/profile.html
 ```
 
 ### 4. Test Accounts
@@ -153,7 +152,7 @@ docker compose ps
 View logs:
 
 ```bash
-docker compose logs --tail=200 app db
+docker compose logs --tail=200 app
 ```
 
 Stop services while keeping current container data:
@@ -174,7 +173,7 @@ Stop and remove containers:
 docker compose down
 ```
 
-The current `docker-compose.yml` does not configure a separate MySQL data volume. After `docker compose down`, the database container is removed, and the database will be initialized again on the next startup. See [docker-usage.md](docker-usage.md) for the full Docker guide.
+The current `docker-compose.yml` defines only one `app` service. After `docker compose down`, the container is removed, and the database will be initialized again on the next startup. See [docker-usage.md](docker-usage.md) for the full Docker guide.
 
 ## Option 2: Regular PHP/MySQL Local Deployment
 
@@ -248,13 +247,13 @@ backend/config/database.php
 This is the simplest regular local startup method. Run this command from the project root:
 
 ```bash
-php -S localhost:8080
+php -S localhost:18083
 ```
 
 Then open:
 
 ```text
-http://localhost:8080/frontend/index.html
+http://localhost:18083/frontend/index.html
 ```
 
 Note: the frontend uses `/backend/...` as the API path, so frontend pages and backend APIs must be served from the same site root. Do not open `frontend/index.html` directly by double-clicking it, otherwise API paths and Session cookies may not work correctly.

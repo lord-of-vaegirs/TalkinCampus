@@ -24,14 +24,14 @@ docker compose up -d --build
 
 这个命令会完成三件事：
 
-- 构建 `app` 镜像，镜像内包含 PHP 8.2、Apache 和 `pdo_mysql` 扩展。
-- 启动 `db` 容器，使用 MySQL 8.0。
-- 初始化数据库，自动执行 `database/schema.sql` 和 `database/seed.sql`。
+- 构建 `app` 镜像，镜像内包含 PHP 8.2、Apache、MariaDB 和 `pdo_mysql` 扩展。
+- 启动 `app` 容器，对外提供 Web 服务。
+- 在同一个容器内初始化数据库，自动执行 `database/schema.sql` 和 `database/seed.sql`。
 
 启动成功后，本机服务地址是：
 
 ```text
-http://localhost:8080/frontend/index.html
+http://localhost:18083/frontend/index.html
 ```
 
 ## 3. 检查运行状态
@@ -44,25 +44,13 @@ docker compose ps
 
 正常情况下应该看到：
 
-- `db` 状态为 `healthy`。
-- `app` 状态为 `Up`。
+- 只有一个 `app` 服务。
+- `app` 状态为 `Up`，健康检查通过后会显示 `healthy`。
 
 如果页面打不开或接口报错，可以查看日志：
 
 ```bash
-docker compose logs --tail=200 app db
-```
-
-只看后端容器日志：
-
-```bash
 docker compose logs --tail=200 app
-```
-
-只看数据库容器日志：
-
-```bash
-docker compose logs --tail=200 db
 ```
 
 ## 4. 访问页面
@@ -70,16 +58,16 @@ docker compose logs --tail=200 db
 浏览器打开以下地址：
 
 ```text
-首页：http://localhost:8080/frontend/index.html
-登录：http://localhost:8080/frontend/login.html
-注册：http://localhost:8080/frontend/register.html
-个人中心：http://localhost:8080/frontend/profile.html
+首页：http://localhost:18083/frontend/index.html
+登录：http://localhost:18083/frontend/login.html
+注册：http://localhost:18083/frontend/register.html
+个人中心：http://localhost:18083/frontend/profile.html
 ```
 
 帖子详情页一般通过首页帖子列表点击进入，也可以直接访问：
 
 ```text
-http://localhost:8080/frontend/post.html?id=1
+http://localhost:18083/frontend/post.html?id=1
 ```
 
 ## 5. 测试账号
@@ -120,12 +108,18 @@ docker compose restart
 docker compose down
 ```
 
-注意：当前 `docker-compose.yml` 没有为 MySQL 配置独立数据卷，执行 `docker compose down` 会删除数据库容器，数据库会在下次启动时重新初始化。日常只想临时关闭服务时，请优先使用 `docker compose stop`。
+注意：当前 `docker-compose.yml` 只定义一个 `app` 服务，数据库也在这个容器内部运行。执行 `docker compose down` 会删除容器，数据库会在下次启动时重新初始化。日常只想临时关闭服务时，请优先使用 `docker compose stop`。
 
 如果你修改了 `Dockerfile`、`docker-compose.yml`、后端依赖或初始化 SQL，建议重新构建：
 
 ```bash
 docker compose up -d --build
+```
+
+如果你之前启动过旧版双容器配置，切换到当前单容器配置时可以清理遗留的 `db` 容器：
+
+```bash
+docker compose up -d --build --remove-orphans
 ```
 
 如果想彻底恢复到初始测试数据，可以执行：
@@ -137,20 +131,19 @@ docker compose up -d --build
 
 ## 7. 服务配置说明
 
-`docker-compose.yml` 中启动了两个服务：
+`docker-compose.yml` 中只启动一个服务：
 
 ```text
-app：PHP 8.2 + Apache，映射到本机 http://localhost:8080
-db：MySQL 8.0，映射到本机 3306 端口
+app：PHP 8.2 + Apache + MariaDB，映射到本机 http://localhost:18083
 ```
 
-后端容器连接数据库时使用以下环境变量：
+后端在同一容器内连接数据库时使用以下环境变量：
 
 ```text
-DB_HOST=db
+DB_HOST=127.0.0.1
 DB_NAME=talkincampus
-DB_USER=root
-DB_PASS=your_password
+DB_USER=admin
+DB_PASS=admin
 ```
 
 数据库初始化文件位于：
@@ -160,26 +153,26 @@ database/schema.sql
 database/seed.sql
 ```
 
-前端和后端代码以目录挂载方式进入容器：
+前端和后端代码在构建镜像时复制进容器：
 
 ```text
 frontend -> /var/www/html/frontend
 backend  -> /var/www/html/backend
 ```
 
-因此修改本地 `frontend` 或 `backend` 目录下的代码后，通常刷新浏览器即可看到效果。
+因此修改本地 `frontend` 或 `backend` 目录下的代码后，需要重新执行 `docker compose up -d --build`。
 
 ## 8. 接口快速检查
 
 可以在浏览器开发者工具的 Network 面板查看接口请求，也可以直接访问以下 GET 接口：
 
 ```text
-http://localhost:8080/backend/api/posts/list.php
-http://localhost:8080/backend/api/posts/detail.php?id=1
-http://localhost:8080/backend/api/search/search.php?q=图书馆
-http://localhost:8080/backend/api/auth/me.php
-http://localhost:8080/backend/api/users/me.php
-http://localhost:8080/backend/api/users/stats.php
+http://localhost:18083/backend/api/posts/list.php
+http://localhost:18083/backend/api/posts/detail.php?id=1
+http://localhost:18083/backend/api/search/search.php?q=图书馆
+http://localhost:18083/backend/api/auth/me.php
+http://localhost:18083/backend/api/users/me.php
+http://localhost:18083/backend/api/users/stats.php
 ```
 
 需要登录态或表单数据的接口建议通过页面操作测试：
@@ -249,7 +242,7 @@ POST /backend/api/comments/toggle_like.php
 
 ### 端口被占用
 
-如果 `8080` 被占用，修改 `docker-compose.yml` 中 `app` 的端口映射：
+如果 `18083` 被占用，修改 `docker-compose.yml` 中 `app` 的端口映射：
 
 ```yaml
 ports:
@@ -268,43 +261,33 @@ docker compose up -d --build
 http://localhost:8081/frontend/index.html
 ```
 
-如果 `3306` 被本机 MySQL 占用，可以修改 `db` 的端口映射，例如：
-
-```yaml
-ports:
-  - "3307:3306"
-```
-
-容器内部仍然使用 `DB_HOST=db` 连接，不需要改后端配置。
-
 ### 数据库连接失败
 
 按顺序检查：
 
 ```bash
 docker compose ps
-docker compose logs --tail=200 db
 docker compose logs --tail=200 app
 ```
 
-重点确认 `db` 是否已经变成 `healthy`，以及 `app` 日志里是否出现数据库连接错误。
+重点确认 `app` 是否已经变成 `healthy`，以及日志里是否出现数据库连接错误。
 
 ### 修改 SQL 后没有生效
 
-MySQL 官方镜像只会在数据库首次初始化时执行 `/docker-entrypoint-initdb.d` 里的脚本。当前项目中，重新创建数据库容器即可重新导入：
+当前项目只会在容器内数据库首次初始化时执行 `/docker-entrypoint-initdb.d` 里的脚本。重新创建容器即可重新导入：
 
 ```bash
 docker compose down
 docker compose up -d --build
 ```
 
-### 进入数据库容器
+### 进入容器内数据库
 
 ```bash
-docker compose exec db mysql -uroot -pyour_password talkincampus
+docker compose exec app mysql -uadmin -padmin talkincampus
 ```
 
-### 查看后端容器环境变量
+### 查看容器环境变量
 
 ```bash
 docker compose exec app env
