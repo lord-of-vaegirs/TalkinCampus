@@ -1,68 +1,92 @@
 # TalkinCampus Docker 本地使用说明
 
-这份文档用于在本机通过 Docker 启动 TalkinCampus 服务。项目已经把 PHP/Apache 后端和 MySQL 数据库打包进 Docker，不需要手动安装 PHP、Apache 或 MySQL。
+这份文档用于在本机通过 Docker 启动 TalkinCampus 服务。项目已经把 PHP/Apache 后端、MariaDB 数据库、数据库连接环境变量和初始化逻辑全部写入 `Dockerfile`，不需要手动安装 PHP、Apache 或 MySQL，也不需要单独启动数据库容器。
 
 ## 1. 准备工作
 
 请先确认本机已经安装并启动 Docker Desktop。
 
-在终端进入项目根目录，也就是包含 `Dockerfile` 和 `docker-compose.yml` 的目录：
+在终端进入项目根目录，也就是包含 `Dockerfile` 的目录：
 
 ```bash
 cd TalkinCampus
 ```
 
-如果你的 Docker 版本较新，推荐使用 `docker compose` 命令；如果本机只支持旧版命令，可以把下面命令里的 `docker compose` 替换成 `docker-compose`。
-
-## 2. 首次启动服务
+## 2. 构建镜像
 
 在项目根目录执行：
 
 ```bash
-docker compose up -d --build
+docker build -t talkincampus .
 ```
 
 这个命令会完成三件事：
 
-- 构建 `app` 镜像，镜像内包含 PHP 8.2、Apache、MariaDB 和 `pdo_mysql` 扩展。
-- 启动 `app` 容器，对外提供 Web 服务。
-- 在同一个容器内初始化数据库，自动执行 `database/schema.sql` 和 `database/seed.sql`。
+- 根据 `Dockerfile` 构建镜像。
+- 将 PHP 8.2、Apache、MariaDB 和 `pdo_mysql` 扩展打包进同一个镜像。
+- 将前端、后端和数据库初始化 SQL 复制进镜像。
+
+## 3. 启动容器
+
+前台启动：
+
+```bash
+docker run --rm -p 18083:80 talkincampus
+```
+
+容器内部 Apache 监听 `80` 端口，本机通过 `18083` 访问。MariaDB 会在同一个容器内启动，首次启动时会自动执行：
+
+```text
+database/schema.sql
+database/seed.sql
+```
+
+如果需要后台运行：
+
+```bash
+docker run -d --name talkincampus -p 18083:80 talkincampus
+```
 
 启动成功后，本机服务地址是：
 
 ```text
-http://localhost:18083/frontend/index.html
+http://localhost:18083/
 ```
 
-## 3. 检查运行状态
+## 4. 检查运行状态
 
 查看容器是否正常运行：
 
 ```bash
-docker compose ps
+docker ps --filter name=talkincampus
 ```
 
 正常情况下应该看到：
 
-- 只有一个 `app` 服务。
-- `app` 状态为 `Up`，健康检查通过后会显示 `healthy`。
+- 只有一个 TalkinCampus 容器。
+- 容器状态为 `Up`。
 
 如果页面打不开或接口报错，可以查看日志：
 
 ```bash
-docker compose logs --tail=200 app
+docker logs --tail=200 talkincampus
 ```
 
-## 4. 访问页面
+如果你使用前台 `docker run --rm ...` 启动，日志会直接显示在当前终端里。
+
+## 5. 访问页面
 
 浏览器打开以下地址：
 
 ```text
+根目录：http://localhost:18083/
 首页：http://localhost:18083/frontend/index.html
 登录：http://localhost:18083/frontend/login.html
 注册：http://localhost:18083/frontend/register.html
 个人中心：http://localhost:18083/frontend/profile.html
 ```
+
+访问根目录 `/` 会自动进入首页 `/frontend/index.html`。
 
 帖子详情页一般通过首页帖子列表点击进入，也可以直接访问：
 
@@ -70,7 +94,7 @@ docker compose logs --tail=200 app
 http://localhost:18083/frontend/post.html?id=1
 ```
 
-## 5. 测试账号
+## 6. 测试账号
 
 数据库初始化后会自动导入测试数据，可以直接使用以下账号登录：
 
@@ -80,64 +104,54 @@ bob / password
 charlie / password
 ```
 
-也可以在注册页创建新账号。新账号只保存在当前 Docker 数据库容器里。
+也可以在注册页创建新账号。新账号只保存在当前 Docker 容器内部数据库里。
 
-## 6. 常用操作
+## 7. 常用操作
 
-暂停服务但保留当前容器数据：
+如果使用前台方式启动：
 
 ```bash
-docker compose stop
+docker run --rm -p 18083:80 talkincampus
 ```
 
-重新启动已经暂停的服务：
+按 `Ctrl+C` 即可停止容器，并且 `--rm` 会自动删除容器。
+
+如果使用后台方式启动：
 
 ```bash
-docker compose start
+docker run -d --name talkincampus -p 18083:80 talkincampus
 ```
 
-重启服务：
+查看日志：
 
 ```bash
-docker compose restart
+docker logs --tail=200 talkincampus
 ```
 
 停止并删除容器：
 
 ```bash
-docker compose down
+docker stop talkincampus
+docker rm talkincampus
 ```
 
-注意：当前 `docker-compose.yml` 只定义一个 `app` 服务，数据库也在这个容器内部运行。执行 `docker compose down` 会删除容器，数据库会在下次启动时重新初始化。日常只想临时关闭服务时，请优先使用 `docker compose stop`。
+注意：当前项目没有配置持久化数据卷。删除容器后，数据库会在下次启动时重新初始化。
 
-如果你修改了 `Dockerfile`、`docker-compose.yml`、后端依赖或初始化 SQL，建议重新构建：
+如果你修改了 `Dockerfile`、前端、后端或初始化 SQL，建议重新构建：
 
 ```bash
-docker compose up -d --build
+docker build -t talkincampus .
 ```
 
-如果你之前启动过旧版双容器配置，切换到当前单容器配置时可以清理遗留的 `db` 容器：
+## 8. 服务配置说明
 
-```bash
-docker compose up -d --build --remove-orphans
-```
-
-如果想彻底恢复到初始测试数据，可以执行：
-
-```bash
-docker compose down
-docker compose up -d --build
-```
-
-## 7. 服务配置说明
-
-`docker-compose.yml` 中只启动一个服务：
+`Dockerfile` 会构建一个完整应用镜像：
 
 ```text
-app：PHP 8.2 + Apache + MariaDB，映射到本机 http://localhost:18083
+PHP 8.2 + Apache + MariaDB + pdo_mysql
 ```
 
-后端在同一容器内连接数据库时使用以下环境变量：
+镜像内默认环境变量：
 
 ```text
 DB_HOST=127.0.0.1
@@ -153,16 +167,17 @@ database/schema.sql
 database/seed.sql
 ```
 
-前端和后端代码在构建镜像时复制进容器：
+前端、后端和根目录入口页在构建镜像时复制进容器：
 
 ```text
+index.html -> /var/www/html/index.html
 frontend -> /var/www/html/frontend
 backend  -> /var/www/html/backend
 ```
 
-因此修改本地 `frontend` 或 `backend` 目录下的代码后，需要重新执行 `docker compose up -d --build`。
+因此修改本地 `frontend` 或 `backend` 目录下的代码后，需要重新执行 `docker build -t talkincampus .`。
 
-## 8. 接口快速检查
+## 9. 接口快速检查
 
 可以在浏览器开发者工具的 Network 面板查看接口请求，也可以直接访问以下 GET 接口：
 
@@ -199,7 +214,7 @@ POST /backend/api/comments/toggle_like.php
 }
 ```
 
-## 9. 推荐验收流程
+## 10. 推荐验收流程
 
 账号功能：
 
@@ -238,57 +253,56 @@ POST /backend/api/comments/toggle_like.php
 3. 打开个人中心，确认能看到自己的资料、帖子和评论。
 4. 确认首页侧边栏能显示帖子数、评论数、获赞数。
 
-## 10. 常见问题
+## 11. 常见问题
 
 ### 端口被占用
 
-如果 `18083` 被占用，修改 `docker-compose.yml` 中 `app` 的端口映射：
-
-```yaml
-ports:
-  - "8081:80"
-```
-
-然后重新启动：
+如果 `18083` 被占用，修改 `docker run` 命令左侧的宿主机端口即可：
 
 ```bash
-docker compose up -d --build
+docker run --rm -p 8081:80 talkincampus
 ```
 
 访问地址也要改为：
 
 ```text
-http://localhost:8081/frontend/index.html
+http://localhost:8081/
 ```
+
+### 根目录 Forbidden
+
+当前镜像已经内置 `/var/www/html/index.html`，访问 `http://localhost:18083/` 会自动进入 `/frontend/index.html`。如果仍然看到 Forbidden，请确认镜像已经重新构建，而不是运行旧镜像。
 
 ### 数据库连接失败
 
 按顺序检查：
 
 ```bash
-docker compose ps
-docker compose logs --tail=200 app
+docker ps --filter name=talkincampus
+docker logs --tail=200 talkincampus
 ```
 
-重点确认 `app` 是否已经变成 `healthy`，以及日志里是否出现数据库连接错误。
+重点确认容器是否处于 `Up` 状态，以及日志里是否出现数据库连接错误。
 
 ### 修改 SQL 后没有生效
 
 当前项目只会在容器内数据库首次初始化时执行 `/docker-entrypoint-initdb.d` 里的脚本。重新创建容器即可重新导入：
 
 ```bash
-docker compose down
-docker compose up -d --build
+docker stop talkincampus
+docker rm talkincampus
+docker build -t talkincampus .
+docker run -d --name talkincampus -p 18083:80 talkincampus
 ```
 
 ### 进入容器内数据库
 
 ```bash
-docker compose exec app mysql -uadmin -padmin talkincampus
+docker exec -it talkincampus mysql -uadmin -padmin talkincampus
 ```
 
 ### 查看容器环境变量
 
 ```bash
-docker compose exec app env
+docker exec talkincampus env
 ```

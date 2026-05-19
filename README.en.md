@@ -83,7 +83,7 @@ TalkinCampus/
 
 ## Option 1: Run Locally with Docker
 
-Docker is the recommended local startup method. It starts one container that runs both PHP/Apache and the database, so you do not need to install PHP, Apache, or MySQL manually.
+Docker is the recommended local startup method. The project `Dockerfile` packages PHP/Apache, MariaDB, default database environment variables, and database initialization into one image, so you do not need to install PHP, Apache, or MySQL manually, and you do not need a separate database container.
 
 ### 1. Prepare the Environment
 
@@ -95,45 +95,56 @@ Enter the project root directory:
 cd TalkinCampus
 ```
 
-If your Docker version is older, replace `docker compose` with `docker-compose` in the commands below.
-
-### 2. Start the Services
+### 2. Build the Image
 
 ```bash
-docker compose up -d --build
+docker build -t talkincampus .
 ```
 
-This command starts one container:
+This command builds a complete image from the `Dockerfile`. The image contains:
 
 ```text
-app: PHP 8.2 + Apache + MariaDB, exposed on local port 18083
+PHP 8.2 + Apache + MariaDB + pdo_mysql
+frontend/
+backend/
+database/schema.sql
+database/seed.sql
 ```
 
-The database automatically runs:
+### 3. Start the Container
+
+```bash
+docker run --rm -p 18083:80 talkincampus
+```
+
+This command starts one container. The web service listens on port `80` inside the container, and your machine uses port `18083` to access it. The database starts inside the same container and automatically runs these files on first startup:
 
 ```text
 database/schema.sql
 database/seed.sql
 ```
 
-### 3. Open the Application
+### 4. Open the Application
 
 Open this URL in your browser:
 
 ```text
-http://localhost:18083/frontend/index.html
+http://localhost:18083/
 ```
 
 Common pages:
 
 ```text
+Root:    http://localhost:18083/
 Home:    http://localhost:18083/frontend/index.html
 Login:   http://localhost:18083/frontend/login.html
 Sign up: http://localhost:18083/frontend/register.html
 Profile: http://localhost:18083/frontend/profile.html
 ```
 
-### 4. Test Accounts
+The root path `/` automatically opens `/frontend/index.html`.
+
+### 5. Test Accounts
 
 ```text
 alice / password
@@ -141,39 +152,30 @@ bob / password
 charlie / password
 ```
 
-### 5. Common Docker Commands
+### 6. Common Docker Commands
 
-Check service status:
+If you run with `docker run --rm` in the foreground, press `Ctrl+C` to stop and remove the container.
+
+To run in the background:
 
 ```bash
-docker compose ps
+docker run -d --name talkincampus -p 18083:80 talkincampus
 ```
 
 View logs:
 
 ```bash
-docker compose logs --tail=200 app
+docker logs --tail=200 talkincampus
 ```
 
-Stop services while keeping current container data:
+Stop and remove the background container:
 
 ```bash
-docker compose stop
+docker stop talkincampus
+docker rm talkincampus
 ```
 
-Start stopped services:
-
-```bash
-docker compose start
-```
-
-Stop and remove containers:
-
-```bash
-docker compose down
-```
-
-The current `docker-compose.yml` defines only one `app` service. After `docker compose down`, the container is removed, and the database will be initialized again on the next startup. See [docker-usage.md](docker-usage.md) for the full Docker guide.
+See [docker-usage.md](docker-usage.md) for the full Docker guide.
 
 ## Option 2: Regular PHP/MySQL Local Deployment
 
@@ -355,6 +357,6 @@ See [api.md](api.md) for the full API documentation.
 - Backend APIs are in `backend/api/`.
 - Shared backend helpers are in `backend/includes/`.
 - Database schema and seed data are in `database/`.
-- Docker configuration is in `Dockerfile` and `docker-compose.yml`.
+- Docker image build and container startup logic are in `Dockerfile`.
 
 After changing frontend or backend code, Docker deployment usually only needs a browser refresh because `frontend` and `backend` are mounted into the container as volumes. After changing database initialization SQL, reinitialize the database.
