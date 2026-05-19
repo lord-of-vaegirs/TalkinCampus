@@ -6,11 +6,6 @@ services:
     restart: always
     ports:
       - "18083:80"
-    environment:
-      DB_HOST: 127.0.0.1
-      DB_NAME: talkincampus
-      DB_USER: admin
-      DB_PASS: admin
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 --silent && php -r \"exit(@file_get_contents('http://127.0.0.1/frontend/index.html') === false ? 1 : 0);\""]
       interval: 5s
